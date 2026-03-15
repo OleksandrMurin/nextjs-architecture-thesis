@@ -1,0 +1,257 @@
+diff --git a/src/auth/auth.service.ts b/src/auth/auth.service.ts
+index 25bc933..7a9b922 100644
+--- a/src/auth/auth.service.ts
++++ b/src/auth/auth.service.ts
+@@ -21,7 +21,7 @@ export class AuthService {
+       sub: user.id,
+       username: user.username,
+     });
+-    return { accessToken };
++    return { accessToken, user: { id: user.id, username: user.username } };
+   }
+ 
+   async register(username: string, password: string) {
+diff --git a/src/comments/comments.controller.ts b/src/comments/comments.controller.ts
+index 154d79c..c2e10bb 100644
+--- a/src/comments/comments.controller.ts
++++ b/src/comments/comments.controller.ts
+@@ -39,7 +39,7 @@ export class CommentsController {
+   @Delete(':id')
+   @ApiOperation({ summary: 'Delete comment by id' })
+   @UseGuards(AuthGuard('jwt'))
+-  removeComment(@Req() req: any, @Param('id') id: number) {
++  removeComment(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+     return this.commentsService.remove(id, req.user.userId);
+   }
+ }
+diff --git a/src/comments/comments.module.ts b/src/comments/comments.module.ts
+index 15ebc04..a463ab5 100644
+--- a/src/comments/comments.module.ts
++++ b/src/comments/comments.module.ts
+@@ -1,11 +1,12 @@
+ import { Module } from '@nestjs/common';
+ import { TypeOrmModule } from '@nestjs/typeorm';
++import { Exhibit } from 'src/exhibits/entities/exhibit.entity';
+ import { CommentsController } from './comments.controller';
+ import { CommentsService } from './comments.service';
+ import { Comment } from './entities/comment.entity';
+ 
+ @Module({
+-  imports: [TypeOrmModule.forFeature([Comment])],
++  imports: [TypeOrmModule.forFeature([Comment, Exhibit])],
+   controllers: [CommentsController],
+   providers: [CommentsService],
+ })
+diff --git a/src/comments/comments.service.ts b/src/comments/comments.service.ts
+index 4f6f9a5..1cb7da2 100644
+--- a/src/comments/comments.service.ts
++++ b/src/comments/comments.service.ts
+@@ -4,6 +4,7 @@ import {
+   NotFoundException,
+ } from '@nestjs/common';
+ import { InjectRepository } from '@nestjs/typeorm';
++import { Exhibit } from 'src/exhibits/entities/exhibit.entity';
+ import { Repository } from 'typeorm';
+ import { Comment } from './entities/comment.entity';
+ 
+@@ -12,6 +13,8 @@ export class CommentsService {
+   constructor(
+     @InjectRepository(Comment)
+     private readonly commentsRepo: Repository<Comment>,
++    @InjectRepository(Exhibit)
++    private readonly exhibitsRepo: Repository<Exhibit>,
+   ) {}
+ 
+   async getAll(exhibitId: number) {
+@@ -19,7 +22,26 @@ export class CommentsService {
+   }
+ 
+   async create(userId: number, exhibitId: number, text: string) {
+-    return this.commentsRepo.save({ userId, exhibitId, text });
++    const exhibit = await this.exhibitsRepo.findOne({
++      where: { id: exhibitId },
++    });
++    if (!exhibit) throw new NotFoundException('There is no post with such id');
++    const savedComment = await this.commentsRepo.save({
++      userId,
++      exhibitId,
++      text,
++    });
++    const comment = await this.commentsRepo.findOne({
++      where: { id: savedComment.id },
++      relations: { user: true },
++    });
++    return {
++      id: comment!.id,
++      text: comment!.text,
++      createdAt: comment!.createdAt,
++      exhibitId: comment!.exhibitId,
++      user: { id: comment!.user.id, username: comment!.user.username },
++    };
+   }
+ 
+   async remove(id: number, userId: number) {
+diff --git a/src/comments/entities/comment.entity.ts b/src/comments/entities/comment.entity.ts
+index 7fcae8c..79e7ebe 100644
+--- a/src/comments/entities/comment.entity.ts
++++ b/src/comments/entities/comment.entity.ts
+@@ -30,7 +30,6 @@ export class Comment {
+   exhibitId: number;
+ 
+   @ManyToOne(() => User, (user) => user.comments, {
+-    eager: true,
+     onDelete: 'CASCADE',
+   })
+   @JoinColumn({ name: 'userId' })
+diff --git a/src/exhibits/entities/exhibit.entity.ts b/src/exhibits/entities/exhibit.entity.ts
+index c12c521..bc06164 100644
+--- a/src/exhibits/entities/exhibit.entity.ts
++++ b/src/exhibits/entities/exhibit.entity.ts
+@@ -21,7 +21,7 @@ export class Exhibit {
+   @Column()
+   description: string;
+ 
+-  @ManyToOne(() => User, (user) => user.exhibits, { eager: true })
++  @ManyToOne(() => User, (user) => user.exhibits)
+   @JoinColumn({ name: 'userId' })
+   user: User;
+ 
+diff --git a/src/exhibits/exhibits.controller.ts b/src/exhibits/exhibits.controller.ts
+index 7b9f45c..b8b43bb 100644
+--- a/src/exhibits/exhibits.controller.ts
++++ b/src/exhibits/exhibits.controller.ts
+@@ -49,8 +49,9 @@ export class ExhibitsController {
+   @Get(':id')
+   @ApiOperation({ summary: 'Get one exhibit by id' })
+   @ApiResponse({ status: 200, description: 'Successfully returned exhibit' })
+-  getById(@Param('id', ParseIntPipe) id: number) {
+-    return this.exhibitsService.findOne(id);
++  async getById(@Param('id', ParseIntPipe) id: number) {
++    const exhibit = await this.exhibitsService.findOne(id);
++    return exhibit;
+   }
+ 
+   @UseGuards(AuthGuard('jwt'))
+diff --git a/src/exhibits/exhibits.module.ts b/src/exhibits/exhibits.module.ts
+index 8f2bb61..e700942 100644
+--- a/src/exhibits/exhibits.module.ts
++++ b/src/exhibits/exhibits.module.ts
+@@ -1,12 +1,11 @@
+ import { Module } from '@nestjs/common';
+ import { TypeOrmModule } from '@nestjs/typeorm';
+-import { NotificationsModule } from 'src/notification/notifications.module';
+ import { Exhibit } from './entities/exhibit.entity';
+ import { ExhibitsController } from './exhibits.controller';
+ import { ExhibitsService } from './exhibits.service';
+ 
+ @Module({
+-  imports: [TypeOrmModule.forFeature([Exhibit]), NotificationsModule],
++  imports: [TypeOrmModule.forFeature([Exhibit])],
+   controllers: [ExhibitsController],
+   providers: [ExhibitsService],
+   exports: [ExhibitsService],
+diff --git a/src/exhibits/exhibits.service.ts b/src/exhibits/exhibits.service.ts
+index 87ed1a8..6924731 100644
+--- a/src/exhibits/exhibits.service.ts
++++ b/src/exhibits/exhibits.service.ts
+@@ -4,7 +4,6 @@ import {
+   NotFoundException,
+ } from '@nestjs/common';
+ import { InjectRepository } from '@nestjs/typeorm';
+-import { NotificationGateway } from 'src/notification/notifications.gateway';
+ import { Repository } from 'typeorm';
+ import { Exhibit } from './entities/exhibit.entity';
+ 
+@@ -13,7 +12,6 @@ export class ExhibitsService {
+   constructor(
+     @InjectRepository(Exhibit)
+     private readonly exhibitRepo: Repository<Exhibit>,
+-    private readonly notificationGateway: NotificationGateway,
+   ) {}
+   async create(params: {
+     imageUrl?: string | null;
+@@ -29,28 +27,48 @@ export class ExhibitsService {
+       where: { id: saved.id },
+       relations: { user: true },
+     });
+-    this.notificationGateway.emitExhibitCreated({
+-      id: savedWithUser!.id,
+-      description: savedWithUser!.description,
+-      createdAt: savedWithUser!.createdAt,
+-      user: savedWithUser!.user
+-        ? { id: savedWithUser!.user.id, username: savedWithUser!.user.username }
+-        : undefined,
+-      userId: savedWithUser!.userId,
+-    });
+     return savedWithUser;
+   }
+   async findAll() {
+-    return this.exhibitRepo.find();
++    const exhibits = await this.exhibitRepo.find({
++      relations: {
++        user: true,
++        comments: true,
++      },
++      order: {
++        createdAt: 'DESC',
++      },
++    });
++    return exhibits.map((exhibit) => ({
++      id: exhibit.id,
++      imageUrl: exhibit.imageUrl,
++      description: exhibit.description,
++      createdAt: exhibit.createdAt,
++      user: { id: exhibit.user.id, username: exhibit.user.username },
++      commentCount: exhibit.comments.length,
++    }));
+   }
+   async findAllUsersEx(userId: number) {
+     return this.exhibitRepo.find({ where: { userId: userId } });
+   }
+ 
+   async findOne(id: number) {
+-    const exhibit = await this.exhibitRepo.findOne({ where: { id } });
++    const exhibit = await this.exhibitRepo.findOne({
++      where: { id },
++      relations: {
++        user: true,
++        comments: true,
++      },
++    });
+     if (!exhibit) throw new NotFoundException('Exhibit was not found');
+-    return exhibit;
++    return {
++      id: exhibit.id,
++      imageUrl: exhibit.imageUrl,
++      description: exhibit.description,
++      createdAt: exhibit.createdAt,
++      user: { id: exhibit.user.id, username: exhibit.user.username },
++      commentCount: exhibit.comments.length,
++    };
+   }
+   async remove(id: number, userId: number) {
+     const exhibit = await this.exhibitRepo.findOne({ where: { id } });
+diff --git a/src/main.ts b/src/main.ts
+index 6f7717a..4fa0552 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,3 +1,4 @@
++import { ValidationPipe } from '@nestjs/common';
+ import { NestFactory } from '@nestjs/core';
+ import { NestExpressApplication } from '@nestjs/platform-express';
+ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+@@ -28,6 +29,14 @@ async function bootstrap() {
+   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+     prefix: '/uploads/',
+   });
++  app.useGlobalPipes(
++    new ValidationPipe({
++      whitelist: true,
++      forbidNonWhitelisted: true,
++      transform: true,
++    }),
++  );
++  app.enableCors();
+   await app.listen(3000);
+ }
+ bootstrap();
