@@ -16,7 +16,7 @@ export class Post {
   id: number;
 
   @Column({ type: 'varchar', nullable: true })
-  imageUrl: string | null;
+  imageUrl: string;
 
   @Column()
   description: string;

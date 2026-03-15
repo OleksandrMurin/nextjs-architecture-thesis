@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
+import { mapPostsToResponse, mapPostToResponse } from './mappers/posts.mapper';
 
 @Injectable()
 export class PostsService {
@@ -13,8 +14,9 @@ export class PostsService {
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
   ) {}
+
   async create(params: {
-    imageUrl?: string | null;
+    imageUrl: string;
     userId: number;
     description: string;
   }) {
@@ -27,8 +29,9 @@ export class PostsService {
       where: { id: saved.id },
       relations: { user: true },
     });
-    return savedWithUser;
+    return mapPostToResponse(savedWithUser!);
   }
+
   async findAll() {
     const posts = await this.postRepo.find({
       relations: {
@@ -39,15 +42,9 @@ export class PostsService {
         createdAt: 'DESC',
       },
     });
-    return posts.map((post) => ({
-      id: post.id,
-      imageUrl: post.imageUrl,
-      description: post.description,
-      createdAt: post.createdAt,
-      user: { id: post.user.id, username: post.user.username },
-      commentCount: post.comments.length,
-    }));
+    return mapPostsToResponse(posts);
   }
+
   async findAllUsersPosts(userId: number) {
     return this.postRepo.find({ where: { userId: userId } });
   }
@@ -70,6 +67,7 @@ export class PostsService {
       commentCount: post.comments.length,
     };
   }
+
   async remove(id: number, userId: number) {
     const post = await this.postRepo.findOne({ where: { id } });
     if (!post) throw new NotFoundException('post was not found');

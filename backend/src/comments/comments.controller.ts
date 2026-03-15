@@ -10,8 +10,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CommentsService } from './comments.service';
+import { CommentResponseDto } from './dto/comment-response.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 
 @Controller('posts/:postId/comments')
@@ -21,6 +27,7 @@ export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
   @Get()
   @ApiOperation({ summary: 'Get all comments for post by id' })
+  @ApiOkResponse({ type: CommentResponseDto, isArray: true })
   getAllComments(@Param('postId', ParseIntPipe) postId: number) {
     return this.commentsService.getAll(postId);
   }
@@ -28,6 +35,7 @@ export class CommentsController {
   @Post()
   @ApiOperation({ summary: 'Create comment for post with id from params' })
   @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({ type: CommentResponseDto })
   createComment(
     @Param('postId', ParseIntPipe) postId: number,
     @Req() req: any,
@@ -36,6 +44,7 @@ export class CommentsController {
     return this.commentsService.create(req.user.userId, postId, dto.text);
   }
 
+  //TODO Add proper documentation
   @Delete(':id')
   @ApiOperation({ summary: 'Delete comment by id' })
   @UseGuards(AuthGuard('jwt'))

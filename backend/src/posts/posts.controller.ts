@@ -17,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -24,6 +25,7 @@ import {
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { PostResponseDto } from './dto/post-response.dto';
 import { PostsService } from './posts.service';
 
 @ApiTags('Posts')
@@ -34,7 +36,7 @@ export class PostsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all posts' })
-  @ApiResponse({ status: 200, description: 'Successfully returned posts' })
+  @ApiOkResponse({ type: PostResponseDto, isArray: true })
   getAll() {
     return this.postsService.findAll();
   }
@@ -42,13 +44,14 @@ export class PostsController {
   @Get('my-posts')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all posts of current user' })
+  @ApiOkResponse({ type: PostResponseDto, isArray: true })
   getUserPosts(@Req() req: any) {
     return this.postsService.findAllUsersPosts(req.user.userId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get one post by id' })
-  @ApiResponse({ status: 200, description: 'Successfully returned post' })
+  @ApiOkResponse({ type: PostResponseDto })
   async getById(@Param('id', ParseIntPipe) id: number) {
     const post = await this.postsService.findOne(id);
     return post;
@@ -79,13 +82,14 @@ export class PostsController {
       }),
     }),
   )
+  @ApiOkResponse({ type: PostResponseDto })
   create(
     @Body('description') description: string,
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,
   ) {
     const userId = req.user.userId;
-    const imageUrl = file ? file.filename : null;
+    const imageUrl = file.filename;
 
     return this.postsService.create({
       description,
@@ -98,7 +102,7 @@ export class PostsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete one post by id' })
   @ApiResponse({ status: 200, description: 'Successfully deleted post' })
-  deletepost(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+  deletePost(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.postsService.remove(id, req.user.userId);
   }
 }

@@ -7,6 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from 'src/posts/entities/post.entity';
 import { Repository } from 'typeorm';
 import { Comment } from './entities/comment.entity';
+import {
+  mapCommentsToResponse,
+  mapCommentToResponse,
+} from './mappers/comments.mapper';
 
 @Injectable()
 export class CommentsService {
@@ -18,7 +22,8 @@ export class CommentsService {
   ) {}
 
   async getAll(postId: number) {
-    return this.commentsRepo.find({ where: { postId } });
+    const comments = await this.commentsRepo.find({ where: { postId } });
+    return mapCommentsToResponse(comments);
   }
 
   async create(userId: number, postId: number, text: string) {
@@ -35,13 +40,7 @@ export class CommentsService {
       where: { id: savedComment.id },
       relations: { user: true },
     });
-    return {
-      id: comment!.id,
-      text: comment!.text,
-      createdAt: comment!.createdAt,
-      postId: comment!.postId,
-      user: { id: comment!.user.id, username: comment!.user.username },
-    };
+    return mapCommentToResponse(comment!);
   }
 
   async remove(id: number, userId: number) {
