@@ -19,15 +19,17 @@ export class PostsService {
     imageUrl: string;
     userId: number;
     description: string;
+    categoryId: number;
   }) {
     const saved = await this.postRepo.save({
       imageUrl: params.imageUrl,
       userId: params.userId,
       description: params.description,
+      categoryId: params.categoryId,
     });
     const savedWithUser = await this.postRepo.findOne({
       where: { id: saved.id },
-      relations: { user: true },
+      relations: { user: true, comments: true, category: true },
     });
     return mapPostToResponse(savedWithUser!);
   }
@@ -37,6 +39,7 @@ export class PostsService {
       relations: {
         user: true,
         comments: true,
+        category: true,
       },
       order: {
         createdAt: 'DESC',
@@ -46,7 +49,15 @@ export class PostsService {
   }
 
   async findAllUsersPosts(userId: number) {
-    return this.postRepo.find({ where: { userId: userId } });
+    const posts = await this.postRepo.find({
+      where: { userId: userId },
+      relations: {
+        user: true,
+        comments: true,
+        category: true,
+      },
+    });
+    return mapPostsToResponse(posts);
   }
 
   async findOne(id: number) {
@@ -55,17 +66,11 @@ export class PostsService {
       relations: {
         user: true,
         comments: true,
+        category: true,
       },
     });
     if (!post) throw new NotFoundException('post was not found');
-    return {
-      id: post.id,
-      imageUrl: post.imageUrl,
-      description: post.description,
-      createdAt: post.createdAt,
-      user: { id: post.user.id, username: post.user.username },
-      commentCount: post.comments.length,
-    };
+    return mapPostToResponse(post);
   }
 
   async remove(id: number, userId: number) {

@@ -22,7 +22,10 @@ export class CommentsService {
   ) {}
 
   async getAll(postId: number) {
-    const comments = await this.commentsRepo.find({ where: { postId } });
+    const comments = await this.commentsRepo.find({
+      where: { postId },
+      relations: { user: true },
+    });
     return mapCommentsToResponse(comments);
   }
 

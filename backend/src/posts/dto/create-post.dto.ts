@@ -10,4 +10,7 @@ export class CreatePostDto {
   @IsOptional()
   @IsString()
   imageUrl?: string;
+
+  @ApiProperty({ example: 1 })
+  categoryId: number;
 }

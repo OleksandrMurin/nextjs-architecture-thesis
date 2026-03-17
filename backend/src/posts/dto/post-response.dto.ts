@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CategoryResponseDto } from 'src/categories/dto/category-response.dto';
 import { AuthorResponseDto } from 'src/common/dto/author-response.dto';
 
 export class PostResponseDto {
@@ -19,4 +20,7 @@ export class PostResponseDto {
 
   @ApiProperty({ example: 3 })
   commentCount: number;
+
+  @ApiProperty({ type: CategoryResponseDto })
+  category: CategoryResponseDto;
 }

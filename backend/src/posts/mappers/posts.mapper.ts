@@ -9,6 +9,11 @@ export function mapPostToResponse(post: Post): PostResponseDto {
     createdAt: post.createdAt,
     user: { id: post.user.id, username: post.user.username },
     commentCount: post.comments.length ?? 0,
+    category: {
+      id: post.category.id,
+      name: post.category.name,
+      slug: post.category.slug,
+    },
   };
 }
 

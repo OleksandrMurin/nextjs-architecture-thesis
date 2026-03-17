@@ -67,8 +67,9 @@ export class PostsController {
       properties: {
         image: { type: 'string', format: 'binary' },
         description: { type: 'string' },
+        categoryId: { type: 'string' },
       },
-      required: ['description'],
+      required: ['image', 'description', 'categoryId'],
     },
   })
   @UseInterceptors(
@@ -85,6 +86,7 @@ export class PostsController {
   @ApiOkResponse({ type: PostResponseDto })
   create(
     @Body('description') description: string,
+    @Body('categoryId') categoryId: string,
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,
   ) {
@@ -95,6 +97,7 @@ export class PostsController {
       description,
       imageUrl,
       userId,
+      categoryId: Number(categoryId),
     });
   }
 
