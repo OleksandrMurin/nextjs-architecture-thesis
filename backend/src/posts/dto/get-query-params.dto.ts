@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class GetPostQueryDto {
   @ApiProperty({ required: false, example: 'react' })
@@ -14,5 +14,11 @@ export class GetPostQueryDto {
 
   @ApiProperty({ required: false, example: 'DESC' })
   @IsOptional()
+  @IsIn(['ASC', 'DESC'])
   order?: 'ASC' | 'DESC';
+
+  @ApiProperty({ required: false, example: 'history' })
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

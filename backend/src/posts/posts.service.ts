@@ -37,25 +37,36 @@ export class PostsService {
 
   async findAll(query: GetPostQueryDto) {
     const allowedSortFields = {
-      createdAt: 'createdAt',
-      id: 'id',
+      createdAt: 'post.createdAt',
+      id: 'post.id',
     };
+
+    const search = query.search?.trim();
+    const category = query.category?.trim();
+    const sortField = query.sortBy
+      ? allowedSortFields[query.sortBy]
+      : 'post.createdAt';
+    const order = query.order ?? 'DESC';
+
     const qb = this.postRepo.createQueryBuilder('post');
+
     qb.leftJoinAndSelect('post.user', 'user');
     qb.leftJoinAndSelect('post.comments', 'comments');
     qb.leftJoinAndSelect('post.category', 'category');
-    if (query.search?.trim()) {
+
+    if (search) {
       qb.andWhere('post.description ILIKE :search', {
-        search: `%${query.search?.trim()}%`,
+        search: `%${search}%`,
       });
     }
-    if (!query.sortBy) {
-      qb.orderBy('post.createdAt', 'DESC');
-    } else {
-      const sortField = allowedSortFields[query.sortBy] ?? 'createdAt';
-      const order = query.order ?? 'DESC';
-      qb.orderBy(`post.${sortField}`, `${order}`);
+
+    if (category) {
+      qb.andWhere('category.slug = :category', {
+        category: category,
+      });
     }
+
+    qb.orderBy(sortField, order);
 
     const posts = await qb.getMany();
     return mapPostsToResponse(posts);
