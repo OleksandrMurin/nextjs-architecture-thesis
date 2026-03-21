@@ -6,4 +6,13 @@ export class GetPostQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiProperty({ required: false, example: 'createdAt' })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiProperty({ required: false, example: 'DESC' })
+  @IsOptional()
+  order?: 'ASC' | 'DESC';
 }

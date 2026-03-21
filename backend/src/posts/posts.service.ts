@@ -36,6 +36,10 @@ export class PostsService {
   }
 
   async findAll(query: GetPostQueryDto) {
+    const allowedSortFields = {
+      createdAt: 'createdAt',
+      id: 'id',
+    };
     const qb = this.postRepo.createQueryBuilder('post');
     qb.leftJoinAndSelect('post.user', 'user');
     qb.leftJoinAndSelect('post.comments', 'comments');
@@ -45,18 +49,15 @@ export class PostsService {
         search: `%${query.search?.trim()}%`,
       });
     }
-    qb.orderBy('post.createdAt', 'DESC');
+    if (!query.sortBy) {
+      qb.orderBy('post.createdAt', 'DESC');
+    } else {
+      const sortField = allowedSortFields[query.sortBy] ?? 'createdAt';
+      const order = query.order ?? 'DESC';
+      qb.orderBy(`post.${sortField}`, `${order}`);
+    }
+
     const posts = await qb.getMany();
-    // const posts = await this.postRepo.find({
-    //   relations: {
-    //     user: true,
-    //     comments: true,
-    //     category: true,
-    //   },
-    //   order: {
-    //     createdAt: 'DESC',
-    //   },
-    // });
     return mapPostsToResponse(posts);
   }
 
