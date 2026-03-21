@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { GetPostQueryDto } from './dto/get-query-params.dto';
 import { Post } from './entities/post.entity';
 import { mapPostsToResponse, mapPostToResponse } from './mappers/posts.mapper';
 
@@ -34,17 +35,28 @@ export class PostsService {
     return mapPostToResponse(savedWithUser!);
   }
 
-  async findAll() {
-    const posts = await this.postRepo.find({
-      relations: {
-        user: true,
-        comments: true,
-        category: true,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+  async findAll(query: GetPostQueryDto) {
+    const qb = this.postRepo.createQueryBuilder('post');
+    qb.leftJoinAndSelect('post.user', 'user');
+    qb.leftJoinAndSelect('post.comments', 'comments');
+    qb.leftJoinAndSelect('post.category', 'category');
+    if (query.search?.trim()) {
+      qb.andWhere('post.description ILIKE :search', {
+        search: `%${query.search?.trim()}%`,
+      });
+    }
+    qb.orderBy('post.createdAt', 'DESC');
+    const posts = await qb.getMany();
+    // const posts = await this.postRepo.find({
+    //   relations: {
+    //     user: true,
+    //     comments: true,
+    //     category: true,
+    //   },
+    //   order: {
+    //     createdAt: 'DESC',
+    //   },
+    // });
     return mapPostsToResponse(posts);
   }
 

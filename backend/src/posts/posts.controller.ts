@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -25,6 +26,7 @@ import {
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { GetPostQueryDto } from './dto/get-query-params.dto';
 import { PostResponseDto } from './dto/post-response.dto';
 import { PostsService } from './posts.service';
 
@@ -37,8 +39,8 @@ export class PostsController {
   @Get()
   @ApiOperation({ summary: 'Get all posts' })
   @ApiOkResponse({ type: PostResponseDto, isArray: true })
-  getAll() {
-    return this.postsService.findAll();
+  getAll(@Query() query: GetPostQueryDto) {
+    return this.postsService.findAll(query);
   }
 
   @Get('my-posts')
