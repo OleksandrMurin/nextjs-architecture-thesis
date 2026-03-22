@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 import { v4 as uuidv4 } from 'uuid';
 import { GetPostQueryDto } from './dto/get-query-params.dto';
 import { PostResponseDto } from './dto/post-response.dto';
@@ -37,10 +38,11 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get all posts' })
   @ApiOkResponse({ type: PostResponseDto, isArray: true })
-  getAll(@Query() query: GetPostQueryDto) {
-    return this.postsService.findAll(query);
+  getAll(@Req() req: any, @Query() query: GetPostQueryDto) {
+    return this.postsService.findAll(query, req.user?.userId ?? null);
   }
 
   @Get('my-posts')
@@ -54,8 +56,8 @@ export class PostsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get one post by id' })
   @ApiOkResponse({ type: PostResponseDto })
-  async getById(@Param('id', ParseIntPipe) id: number) {
-    const post = await this.postsService.findOne(id);
+  async getById(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+    const post = await this.postsService.findOne(id, req.user?.userId ?? null);
     return post;
   }
 

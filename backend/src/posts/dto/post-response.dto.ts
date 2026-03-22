@@ -18,9 +18,15 @@ export class PostResponseDto {
   @ApiProperty({ type: AuthorResponseDto })
   user: AuthorResponseDto;
 
+  @ApiProperty({ type: CategoryResponseDto })
+  category: CategoryResponseDto;
+
   @ApiProperty({ example: 3 })
   commentCount: number;
 
-  @ApiProperty({ type: CategoryResponseDto })
-  category: CategoryResponseDto;
+  @ApiProperty({ example: 10 })
+  likesCount: number;
+
+  @ApiProperty({ example: true })
+  likedByMe: boolean;
 }

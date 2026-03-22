@@ -30,12 +30,12 @@ export class PostsService {
     });
     const savedWithUser = await this.postRepo.findOne({
       where: { id: saved.id },
-      relations: { user: true, comments: true, category: true },
+      relations: { user: true, comments: true, category: true, likes: true },
     });
-    return mapPostToResponse(savedWithUser!);
+    return mapPostToResponse(savedWithUser!, params.userId);
   }
 
-  async findAll(query: GetPostQueryDto) {
+  async findAll(query: GetPostQueryDto, userId: number | null) {
     const allowedSortFields = {
       createdAt: 'post.createdAt',
       id: 'post.id',
@@ -53,6 +53,7 @@ export class PostsService {
     qb.leftJoinAndSelect('post.user', 'user');
     qb.leftJoinAndSelect('post.comments', 'comments');
     qb.leftJoinAndSelect('post.category', 'category');
+    qb.leftJoinAndSelect('post.likes', 'likes');
 
     if (search) {
       qb.andWhere('post.description ILIKE :search', {
@@ -69,7 +70,7 @@ export class PostsService {
     qb.orderBy(sortField, order);
 
     const posts = await qb.getMany();
-    return mapPostsToResponse(posts);
+    return mapPostsToResponse(posts, userId);
   }
 
   async findAllUsersPosts(userId: number) {
@@ -79,22 +80,24 @@ export class PostsService {
         user: true,
         comments: true,
         category: true,
+        likes: true,
       },
     });
-    return mapPostsToResponse(posts);
+    return mapPostsToResponse(posts, userId);
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId: number | null) {
     const post = await this.postRepo.findOne({
       where: { id },
       relations: {
         user: true,
         comments: true,
         category: true,
+        likes: true,
       },
     });
     if (!post) throw new NotFoundException('post was not found');
-    return mapPostToResponse(post);
+    return mapPostToResponse(post, userId);
   }
 
   async remove(id: number, userId: number) {
