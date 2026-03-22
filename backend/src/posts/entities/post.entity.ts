@@ -1,5 +1,6 @@
 import { Category } from 'src/categories/entities/category.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
+import { Like } from 'src/likes/entities/like.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   Column,
@@ -34,6 +35,9 @@ export class Post {
 
   @OneToMany(() => Comment, (comment) => comment.post, { cascade: true })
   comments: Comment[];
+
+  @OneToMany(() => Like, (like) => like.post, { cascade: true })
+  likes: Like[];
 
   @ManyToOne(() => Category, (category) => category.posts)
   @JoinColumn({ name: 'categoryId' })

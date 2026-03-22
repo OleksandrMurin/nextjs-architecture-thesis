@@ -1,4 +1,5 @@
 import { Comment } from 'src/comments/entities/comment.entity';
+import { Like } from 'src/likes/entities/like.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Post } from '../../posts/entities/post.entity';
 
@@ -15,6 +16,9 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.user, { cascade: true })
   posts: Post[];
+
+  @OneToMany(() => Like, (like) => like.user, { cascade: true })
+  likes: Like[];
 
   @OneToMany(() => Comment, (comment) => comment.user, { cascade: true })
   comments: Comment[];
