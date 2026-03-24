@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import type { RequestWithUser } from 'src/common/types/request-with-user.type';
 import { CommentsService } from './comments.service';
 import { CommentResponseDto } from './dto/comment-response.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -38,17 +39,20 @@ export class CommentsController {
   @ApiOkResponse({ type: CommentResponseDto })
   createComment(
     @Param('postId', ParseIntPipe) postId: number,
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Body() dto: CreateCommentDto,
   ) {
-    return this.commentsService.create(req.user.userId, postId, dto.text);
+    return this.commentsService.create(req.user!.userId, postId, dto.text);
   }
 
   //TODO Add proper documentation
   @Delete(':id')
   @ApiOperation({ summary: 'Delete comment by id' })
   @UseGuards(AuthGuard('jwt'))
-  removeComment(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.commentsService.remove(id, req.user.userId);
+  removeComment(
+    @Req() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.commentsService.remove(id, req.user!.userId);
   }
 }

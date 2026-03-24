@@ -26,6 +26,7 @@ import {
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
+import type { RequestWithUser } from 'src/common/types/request-with-user.type';
 import { v4 as uuidv4 } from 'uuid';
 import { GetPostQueryDto } from './dto/get-query-params.dto';
 import { PostResponseDto } from './dto/post-response.dto';
@@ -41,7 +42,7 @@ export class PostsController {
   @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get all posts' })
   @ApiOkResponse({ type: PostResponseDto, isArray: true })
-  getAll(@Req() req: any, @Query() query: GetPostQueryDto) {
+  getAll(@Req() req: RequestWithUser, @Query() query: GetPostQueryDto) {
     return this.postsService.findAll(query, req.user?.userId ?? null);
   }
 
@@ -49,14 +50,17 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all posts of current user' })
   @ApiOkResponse({ type: PostResponseDto, isArray: true })
-  getUserPosts(@Req() req: any) {
-    return this.postsService.findAllUsersPosts(req.user.userId);
+  getUserPosts(@Req() req: RequestWithUser) {
+    return this.postsService.findAllUsersPosts(req.user!.userId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get one post by id' })
   @ApiOkResponse({ type: PostResponseDto })
-  async getById(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+  async getById(
+    @Req() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     const post = await this.postsService.findOne(id, req.user?.userId ?? null);
     return post;
   }
@@ -109,7 +113,10 @@ export class PostsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete one post by id' })
   @ApiResponse({ status: 200, description: 'Successfully deleted post' })
-  deletePost(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.postsService.remove(id, req.user.userId);
+  deletePost(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.postsService.remove(id, req.user!.userId);
   }
 }

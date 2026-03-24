@@ -43,7 +43,7 @@ export class PostsService {
 
     const search = query.search?.trim();
     const category = query.category?.trim();
-    const sortField = query.sortBy
+    const sortField: string = query.sortBy
       ? allowedSortFields[query.sortBy]
       : 'post.createdAt';
     const order = query.order ?? 'DESC';
