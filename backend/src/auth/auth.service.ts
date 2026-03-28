@@ -10,8 +10,8 @@ export class AuthService {
     private readonly usersService: UsersService,
   ) {}
 
-  async login(username: string, password: string) {
-    const user = await this.usersService.findByUsername(username);
+  async login(userName: string, password: string) {
+    const user = await this.usersService.findByUsername(userName);
     if (!user) throw new UnauthorizedException('Invalid username');
 
     const ok = await bcrypt.compare(password, user.passwordHash);
@@ -19,14 +19,18 @@ export class AuthService {
 
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
-      username: user.username,
+      userName: user.userName,
     });
-    return { accessToken, user: { id: user.id, username: user.username } };
+    return { accessToken, user: { id: user.id, userName: user.userName } };
   }
 
-  async register(username: string, password: string) {
+  async register(userName: string, password: string) {
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.usersService.createUser({ username, passwordHash });
-    return { id: user.id, username: user.username };
+    const user = await this.usersService.createUser({ userName, passwordHash });
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      userName: user.userName,
+    });
+    return { accessToken, user: { id: user.id, userName: user.userName } };
   }
 }

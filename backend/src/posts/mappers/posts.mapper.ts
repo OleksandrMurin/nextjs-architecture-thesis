@@ -15,7 +15,7 @@ export function mapPostToResponse(
     imageUrl: post.imageUrl,
     description: post.description,
     createdAt: post.createdAt,
-    user: { id: post.user.id, username: post.user.username },
+    user: { id: post.user.id, userName: post.user.userName },
     category: {
       id: post.category.id,
       name: post.category.name,

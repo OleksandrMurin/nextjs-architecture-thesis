@@ -19,7 +19,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login and receive JWT token' })
   @ApiOkResponse({ type: LoginResponseDto })
   login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.username, dto.password);
+    return this.authService.login(dto.userName, dto.password);
   }
 
   @ApiOperation({ summary: 'Register new account' })
@@ -29,6 +29,6 @@ export class AuthController {
   })
   @Post('register')
   register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.username, dto.password);
+    return this.authService.register(dto.userName, dto.password);
   }
 }

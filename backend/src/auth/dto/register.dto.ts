@@ -4,7 +4,7 @@ import { IsString, MinLength } from 'class-validator';
 export class RegisterDto {
   @ApiProperty({ example: 'user123' })
   @IsString()
-  username: string;
+  userName: string;
 
   @ApiProperty({ example: 'password123' })
   @IsString()

@@ -7,7 +7,7 @@ export function mapCommentToResponse(comment: Comment): CommentResponseDto {
     text: comment.text,
     createdAt: comment.createdAt,
     postId: comment.postId,
-    user: { id: comment.user.id, username: comment.user.username },
+    user: { id: comment.user.id, userName: comment.user.userName },
   };
 }
 

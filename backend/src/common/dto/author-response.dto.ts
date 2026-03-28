@@ -5,5 +5,5 @@ export class AuthorResponseDto {
   id: number;
 
   @ApiProperty({ example: 'Charlie Kirk' })
-  username: string;
+  userName: string;
 }
