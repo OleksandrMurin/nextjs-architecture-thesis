@@ -1,8 +1,8 @@
+import { UserAuthData } from "@/modules/auth/types";
 import { deleteCookie, setCookie, setJsonCookie } from "@/shared/lib/cookies";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { loginUser, registerUser } from "../../modules/auth/api/userActions";
-import { type UserAuthData } from "../../types/userTypes";
 
 type TokensType = { access: string };
 export type UserDataType = { id: number; userName: string };
