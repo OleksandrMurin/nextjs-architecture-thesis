@@ -11,15 +11,15 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "next": "16.2.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
     "@mui/icons-material": "^7.3.8",
     "@mui/material": "^7.3.8",
     "@mui/material-nextjs": "^7.3.8",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.5",
     "formik": "^2.4.9",
+    "next": "16.2.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "react-redux": "^9.2.0",
     "socket.io-client": "^4.8.3",
     "yup": "^1.7.1"
@@ -30,6 +30,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
-    "typescript": "^5"
+    "glob": "^13.0.6",
+    "typescript": "^5",
+    "xlsx": "^0.18.5"
   }
 }
