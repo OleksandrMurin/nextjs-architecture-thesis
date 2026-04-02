@@ -4,6 +4,7 @@ import {
   CardContent,
   CardMedia,
   CardProps,
+  Chip,
   Divider,
   Stack,
   Typography,
@@ -12,7 +13,6 @@ import {
 import { Post } from "../types";
 import CardsActionSection from "./CardsActionSection";
 
-//TODO change post type to Post instead of Post in further iterations of project
 type PostCardProps = {
   post: Post;
 } & Omit<CardProps, "children">;
@@ -39,6 +39,7 @@ export function PostCard({ post, ...cardProps }: PostCardProps) {
             {new Date(createdAt).toLocaleDateString()}
           </Typography>
         </Stack>
+        <Chip label={post.category.name} size="medium" sx={{ mb: 1.5 }} />
         <Divider />
         <Box
           sx={{

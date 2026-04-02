@@ -13,7 +13,6 @@ import {
 import { Post } from "@/types/apiTypes";
 import CardsActionSection from "./CardsActionSection";
 
-//TODO change post type to Post instead of Post in further iterations of project
 type PostCardProps = {
   post: Post;
 } & Omit<CardProps, "children">;
