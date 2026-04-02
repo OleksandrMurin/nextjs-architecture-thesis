@@ -12,7 +12,7 @@ export type AuthResponseType = {
   user: UserInfo;
 };
 
-export type CategoryType = {
+export type Category = {
   id: string;
   name: string;
   slug: string;
@@ -24,7 +24,7 @@ export type Post = {
   description: string;
   createdAt: string;
   user: UserInfo;
-  category: CategoryType;
+  category: Category;
   commentCount: number;
   likesCount: number;
   likedByMe: boolean;
