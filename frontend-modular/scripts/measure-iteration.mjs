@@ -30,8 +30,6 @@ function runGitCommand(command) {
 }
 
 function parseShortStat(output) {
-  // Example:
-  // " 7 files changed, 120 insertions(+), 18 deletions(-)"
   const filesChangedMatch = output.match(/(\d+)\s+files?\s+changed/);
   const insertionsMatch = output.match(/(\d+)\s+insertions?\(\+\)/);
   const deletionsMatch = output.match(/(\d+)\s+deletions?\(-\)/);
@@ -43,19 +41,21 @@ function parseShortStat(output) {
   };
 }
 
-function getFilesAdded(fromCommit, toCommit) {
+function quotePathForGit(projectPath) {
+  return `"${projectPath.replace(/\\/g, "/")}"`;
+}
+
+function getFilesAdded(fromCommit, toCommit, projectPath) {
   const output = runGitCommand(
-    `git diff --name-status ${fromCommit} ${toCommit}`,
+    `git diff --name-status ${fromCommit} ${toCommit} -- ${quotePathForGit(projectPath)}`,
   );
 
   if (!output) return 0;
 
   const lines = output.split(/\r?\n/).filter(Boolean);
-
   let filesAdded = 0;
 
   for (const line of lines) {
-    // A\tpath/to/file
     if (line.startsWith("A\t")) {
       filesAdded += 1;
     }
@@ -64,13 +64,12 @@ function getFilesAdded(fromCommit, toCommit) {
   return filesAdded;
 }
 
-function getChangedFilesList(fromCommit, toCommit) {
+function getChangedFilesList(fromCommit, toCommit, projectPath) {
   const output = runGitCommand(
-    `git diff --name-only ${fromCommit} ${toCommit}`,
+    `git diff --name-only ${fromCommit} ${toCommit} -- ${quotePathForGit(projectPath)}`,
   );
 
   if (!output) return [];
-
   return output.split(/\r?\n/).filter(Boolean);
 }
 
@@ -81,7 +80,6 @@ function readExistingRows(xlsxPath, sheetName) {
   const sheet = workbook.Sheets[sheetName];
 
   if (!sheet) return [];
-
   return XLSX.utils.sheet_to_json(sheet, { defval: "" });
 }
 
@@ -105,11 +103,12 @@ function main() {
   const feature = getArgValue("--feature", "unknown");
   const fromCommit = getArgValue("--from", "");
   const toCommit = getArgValue("--to", "");
+  const projectPath = getArgValue("--projectPath", "");
   const notes = getArgValue("--notes", "");
 
-  if (!fromCommit || !toCommit) {
+  if (!fromCommit || !toCommit || !projectPath) {
     console.error(
-      'Error: both --from and --to commit hashes are required.\nExample:\nnode scripts/measure-iteration.mjs --architecture monolith --feature "categories" --from c033f00 --to abc1234',
+      'Error: --from, --to and --projectPath are required.\nExample:\nnode scripts/measure-iteration.mjs --architecture modular --feature "categories" --from 67ed071 --to abc1234 --projectPath frontend-modular',
     );
     process.exit(1);
   }
@@ -119,13 +118,14 @@ function main() {
   const sheetName = "iterations";
 
   const shortStatOutput = runGitCommand(
-    `git diff --shortstat ${fromCommit} ${toCommit}`,
+    `git diff --shortstat ${fromCommit} ${toCommit} -- ${quotePathForGit(projectPath)}`,
   );
 
   const { filesChanged, insertions, deletions } =
     parseShortStat(shortStatOutput);
-  const filesAdded = getFilesAdded(fromCommit, toCommit);
-  const changedFiles = getChangedFilesList(fromCommit, toCommit);
+
+  const filesAdded = getFilesAdded(fromCommit, toCommit, projectPath);
+  const changedFiles = getChangedFilesList(fromCommit, toCommit, projectPath);
 
   const row = {
     measuredAt: getNow(),
@@ -133,6 +133,7 @@ function main() {
     feature,
     fromCommit,
     toCommit,
+    projectPath,
     filesChanged,
     filesAdded,
     insertions,
@@ -153,6 +154,7 @@ function main() {
       feature: row.feature,
       fromCommit: row.fromCommit,
       toCommit: row.toCommit,
+      projectPath: row.projectPath,
       filesChanged: row.filesChanged,
       filesAdded: row.filesAdded,
       insertions: row.insertions,
