@@ -4,6 +4,7 @@ import {
   CardContent,
   CardMedia,
   CardProps,
+  Chip,
   Divider,
   Stack,
   Typography,
@@ -39,6 +40,7 @@ export function PostCard({ post, children, ...cardProps }: PostCardProps) {
             {new Date(createdAt).toLocaleDateString()}
           </Typography>
         </Stack>
+        <Chip label={post.category.name} size="medium" sx={{ mb: 1.5 }} />
         <Divider />
         <Box
           sx={{

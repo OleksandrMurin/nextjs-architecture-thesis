@@ -1,10 +1,15 @@
 "use client";
 
+import { Category } from "@/entities/post";
 import {
   Alert,
   Box,
   Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -12,6 +17,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPost } from "../api/create-post";
+import { getAllCategories } from "../api/get-categories";
 
 const MAX_IMAGE_MB = 4;
 
@@ -24,6 +30,25 @@ export function CreatePostForm() {
   const [loading, setLoading] = useState(false);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const [selectValue, setSelectValue] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await getAllCategories();
+        setCategories(data);
+        if (data.length > 0) {
+          setSelectValue(data[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load categories", error);
+        setStatus("Failed to load categories.");
+      }
+    }
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (!image) {
@@ -67,7 +92,7 @@ export function CreatePostForm() {
 
     try {
       setLoading(true);
-      await createPost(image, text);
+      await createPost(image, text, selectValue);
       router.push("/my-posts");
     } catch (e) {
       setStatus("Failed to create post. Try again.");
@@ -161,6 +186,22 @@ export function CreatePostForm() {
                   </Typography>
                 </Box>
               )}
+              <FormControl>
+                <InputLabel>Select category</InputLabel>
+                <Select
+                  label="Select category"
+                  value={selectValue}
+                  onChange={(e) => {
+                    setSelectValue(e.target.value);
+                  }}
+                >
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Stack>
 
             <Stack spacing={1}>
