@@ -17,3 +17,10 @@ export type Category = {
   name: string;
   slug: string;
 };
+
+export type GetPostsParams = {
+  search?: string;
+  sortBy?: "createdAt";
+  order?: "ASC" | "DESC";
+  category?: string;
+};
