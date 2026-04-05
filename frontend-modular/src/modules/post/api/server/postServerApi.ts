@@ -1,12 +1,12 @@
+import { GetPostsParams } from "@/app/(main)/page";
+import { postQueryBuilder } from "@/shared/lib/postQueryBuilder";
 import { cookies } from "next/headers";
 import { Post } from "../../types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export async function getAllPosts(category?: string): Promise<Post[]> {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  const query = params.toString();
+export async function getAllPosts(params: GetPostsParams): Promise<Post[]> {
+  const query = postQueryBuilder(params);
   const url = query
     ? `${API_BASE_URL}/posts?${query}`
     : `${API_BASE_URL}/posts`;
