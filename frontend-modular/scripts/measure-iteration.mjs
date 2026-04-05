@@ -22,8 +22,9 @@ function getNow() {
   )} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 }
 
-function runGitCommand(command) {
+function runGitCommand(command, cwd = process.cwd()) {
   return execSync(command, {
+    cwd,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   }).trim();
@@ -41,13 +42,37 @@ function parseShortStat(output) {
   };
 }
 
-function quotePathForGit(projectPath) {
-  return `"${projectPath.replace(/\\/g, "/")}"`;
+function getRepoRoot() {
+  return runGitCommand("git rev-parse --show-toplevel");
 }
 
-function getFilesAdded(fromCommit, toCommit, projectPath) {
+function toGitPath(relativePath) {
+  return relativePath.split(path.sep).join("/");
+}
+
+function getCurrentProjectInfo() {
+  const cwd = process.cwd();
+  const repoRoot = getRepoRoot();
+  const relativeProjectPath = path.relative(repoRoot, cwd);
+
+  if (!relativeProjectPath || relativeProjectPath.startsWith("..")) {
+    throw new Error(
+      "Script must be run from inside a project folder within the git repository.",
+    );
+  }
+
+  return {
+    cwd,
+    repoRoot,
+    projectPath: toGitPath(relativeProjectPath),
+    architecture: path.basename(cwd),
+  };
+}
+
+function getFilesAdded(fromCommit, toCommit, projectPath, repoRoot) {
   const output = runGitCommand(
-    `git diff --name-status ${fromCommit} ${toCommit} -- ${quotePathForGit(projectPath)}`,
+    `git diff --name-status ${fromCommit} ${toCommit} -- "${projectPath}"`,
+    repoRoot,
   );
 
   if (!output) return 0;
@@ -64,13 +89,48 @@ function getFilesAdded(fromCommit, toCommit, projectPath) {
   return filesAdded;
 }
 
-function getChangedFilesList(fromCommit, toCommit, projectPath) {
+function getChangedFilesList(fromCommit, toCommit, projectPath, repoRoot) {
   const output = runGitCommand(
-    `git diff --name-only ${fromCommit} ${toCommit} -- ${quotePathForGit(projectPath)}`,
+    `git diff --name-only ${fromCommit} ${toCommit} -- "${projectPath}"`,
+    repoRoot,
   );
 
   if (!output) return [];
   return output.split(/\r?\n/).filter(Boolean);
+}
+
+function countCodeLines(projectDir) {
+  const sourceDir = path.join(projectDir, "src");
+
+  if (!fs.existsSync(sourceDir)) {
+    return 0;
+  }
+
+  const includedExtensions = new Set([".ts", ".tsx", ".js", ".jsx"]);
+  let total = 0;
+
+  function walk(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+
+      const ext = path.extname(entry.name).toLowerCase();
+      if (!includedExtensions.has(ext)) continue;
+
+      const content = fs.readFileSync(fullPath, "utf8");
+      const lines = content.split(/\r?\n/).length;
+      total += lines;
+    }
+  }
+
+  walk(sourceDir);
+  return total;
 }
 
 function readExistingRows(xlsxPath, sheetName) {
@@ -99,38 +159,40 @@ function writeRowsToWorkbook(xlsxPath, sheetName, rows) {
 }
 
 function main() {
-  const architecture = getArgValue("--architecture", "unknown");
-  const feature = getArgValue("--feature", "unknown");
-  const fromCommit = getArgValue("--from", "");
-  const toCommit = getArgValue("--to", "");
-  const projectPath = getArgValue("--projectPath", "");
-  const notes = getArgValue("--notes", "");
+  const fromCommit = getArgValue("--from");
+  const toCommit = getArgValue("--to");
 
-  if (!fromCommit || !toCommit || !projectPath) {
+  if (!fromCommit || !toCommit) {
     console.error(
-      'Error: --from, --to and --projectPath are required.\nExample:\nnode scripts/measure-iteration.mjs --architecture modular --feature "categories" --from 67ed071 --to abc1234 --projectPath frontend-modular',
+      "Error: --from and --to are required.\nExample:\nnode measure-iteration.mjs --from abc1234 --to def5678",
     );
     process.exit(1);
   }
 
-  const projectRoot = process.cwd();
-  const outputPath = path.join(projectRoot, "metrics-iteration.xlsx");
+  const { cwd, repoRoot, projectPath, architecture } = getCurrentProjectInfo();
+  const outputPath = path.join(cwd, "metrics-iteration.xlsx");
   const sheetName = "iterations";
 
   const shortStatOutput = runGitCommand(
-    `git diff --shortstat ${fromCommit} ${toCommit} -- ${quotePathForGit(projectPath)}`,
+    `git diff --shortstat ${fromCommit} ${toCommit} -- "${projectPath}"`,
+    repoRoot,
   );
 
   const { filesChanged, insertions, deletions } =
     parseShortStat(shortStatOutput);
 
-  const filesAdded = getFilesAdded(fromCommit, toCommit, projectPath);
-  const changedFiles = getChangedFilesList(fromCommit, toCommit, projectPath);
+  const filesAdded = getFilesAdded(fromCommit, toCommit, projectPath, repoRoot);
+  const changedFiles = getChangedFilesList(
+    fromCommit,
+    toCommit,
+    projectPath,
+    repoRoot,
+  );
+  const codeLines = countCodeLines(cwd);
 
   const row = {
     measuredAt: getNow(),
     architecture,
-    feature,
     fromCommit,
     toCommit,
     projectPath,
@@ -138,8 +200,8 @@ function main() {
     filesAdded,
     insertions,
     deletions,
+    codeLines,
     changedFilesList: changedFiles.join("\n"),
-    notes,
   };
 
   const existingRows = readExistingRows(outputPath, sheetName);
@@ -151,7 +213,6 @@ function main() {
     {
       measuredAt: row.measuredAt,
       architecture: row.architecture,
-      feature: row.feature,
       fromCommit: row.fromCommit,
       toCommit: row.toCommit,
       projectPath: row.projectPath,
@@ -159,6 +220,7 @@ function main() {
       filesAdded: row.filesAdded,
       insertions: row.insertions,
       deletions: row.deletions,
+      codeLines: row.codeLines,
     },
   ]);
 
