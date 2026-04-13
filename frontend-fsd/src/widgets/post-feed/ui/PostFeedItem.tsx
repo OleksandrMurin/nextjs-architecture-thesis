@@ -14,6 +14,8 @@ export default function PostFeedItem({
     <PostCard post={post} {...cardProps}>
       <PostCardActions
         commentCount={post.commentCount}
+        likesCount={post.likesCount}
+        likedByMe={post.likedByMe}
         user={post.user}
         id={post.id}
       />

@@ -4,6 +4,7 @@ import { User } from "@/entities/user/model/types";
 import { useAppSelector } from "@/hooks/reduxHooks";
 
 import DeletePostButton from "@/features/delete-post/ui/DeletePostButton";
+import PostLikeButton from "@/features/toggle-post-like/ui/PostLikeButton";
 import InsertCommentOutlinedIcon from "@mui/icons-material/InsertCommentOutlined";
 import {
   Box,
@@ -18,11 +19,16 @@ import { PostCommentsSection } from "./PostCommentsSection";
 
 type Props = {
   commentCount: number;
+  likesCount: number;
+  likedByMe: boolean;
   user: User;
   id: number;
 };
 
-const PostCardActions: FC<Props> = ({ commentCount, user, id }, ...props) => {
+const PostCardActions: FC<Props> = (
+  { commentCount, likesCount, likedByMe, user, id },
+  ...props
+) => {
   const userId = useAppSelector((state) => state.users.user?.id);
   const [isActive, setIsActive] = useState(false);
   const [commentCounter, setCommentCounter] = useState(commentCount);
@@ -40,6 +46,11 @@ const PostCardActions: FC<Props> = ({ commentCount, user, id }, ...props) => {
           </Stack>
 
           <Stack direction="row" spacing={1}>
+            <PostLikeButton
+              postId={id}
+              initialLikedByMe={likedByMe}
+              initialLikeCount={likesCount}
+            />
             <IconButton
               size="small"
               aria-label="toggle comments"
