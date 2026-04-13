@@ -17,3 +17,5 @@ export type Category = {
   name: string;
   slug: string;
 };
+
+//Here should`ve been some changes in this iteration, but I`ve already done them. Nevertheless i still need to trek changes, so I add this comment
