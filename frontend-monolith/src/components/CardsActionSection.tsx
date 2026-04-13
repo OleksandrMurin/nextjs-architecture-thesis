@@ -16,21 +16,29 @@ import {
 import { useRouter } from "next/navigation";
 import { FC, useState } from "react";
 import { CommentSection } from "./CommentSection";
+import PostLikeButton from "./PostLikeButton";
 
 type Props = {
   commentCount: number;
+  likesCount: number;
+  likedByMe: boolean;
   user: UserInfo;
   id: number;
 };
 
-const CardsActionSection: FC<Props> = (
-  { commentCount, user, id },
+const CardsActionSection: FC<Props> = ({
+  commentCount,
+  likesCount,
+  likedByMe,
+  user,
+  id,
   ...props
-) => {
+}) => {
   const userId = useAppSelector((state) => state.users.user?.id);
   const router = useRouter();
   const [isActive, setIsActive] = useState(false);
   const [commentCounter, setCommentCounter] = useState(commentCount);
+
   const onDelete = async () => {
     try {
       await deletePostById(id);
@@ -39,12 +47,14 @@ const CardsActionSection: FC<Props> = (
       console.log(`Error ${e} occurred in deletePostById`);
     }
   };
+
   return (
     <Box {...props}>
       <CardActions sx={{ px: 2, pb: isActive ? 0 : 2 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
+          alignItems="center"
           sx={{ width: "100%" }}
         >
           <Stack direction="row" spacing={1} alignItems="center">
@@ -53,6 +63,11 @@ const CardsActionSection: FC<Props> = (
           </Stack>
 
           <Stack direction="row" spacing={1}>
+            <PostLikeButton
+              postId={id}
+              initialLikedByMe={likedByMe}
+              initialLikeCount={likesCount}
+            />
             <IconButton
               size="small"
               aria-label="toggle comments"
@@ -74,6 +89,7 @@ const CardsActionSection: FC<Props> = (
             >
               <InsertCommentOutlinedIcon />
             </IconButton>
+
             {userId === user.id && (
               <IconButton
                 size="small"
@@ -87,6 +103,7 @@ const CardsActionSection: FC<Props> = (
           </Stack>
         </Stack>
       </CardActions>
+
       {isActive && (
         <Box
           sx={{

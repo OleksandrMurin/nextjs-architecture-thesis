@@ -18,7 +18,15 @@ type PostCardProps = {
 } & Omit<CardProps, "children">;
 
 export function PostCard({ post, ...cardProps }: PostCardProps) {
-  const { id, description, user, commentCount, createdAt } = post;
+  const {
+    id,
+    description,
+    user,
+    commentCount,
+    createdAt,
+    likesCount,
+    likedByMe,
+  } = post;
   const DefaultPostImage =
     "https://www.meme-arsenal.com/memes/3f8a7bfb021037f1187702e0cc9d1680.jpg";
 
@@ -61,7 +69,13 @@ export function PostCard({ post, ...cardProps }: PostCardProps) {
           </Typography>
         </Box>
       </CardContent>
-      <CardsActionSection commentCount={commentCount} user={user} id={id} />
+      <CardsActionSection
+        commentCount={commentCount}
+        user={user}
+        id={id}
+        likesCount={likesCount}
+        likedByMe={likedByMe}
+      />
     </Card>
   );
 }
