@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -30,6 +31,7 @@ import type { RequestWithUser } from 'src/common/types/request-with-user.type';
 import { v4 as uuidv4 } from 'uuid';
 import { GetPostQueryDto } from './dto/get-query-params.dto';
 import { PostResponseDto } from './dto/post-response.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
 
 @ApiTags('Posts')
@@ -118,5 +120,17 @@ export class PostsController {
     @Req() req: RequestWithUser,
   ) {
     return this.postsService.remove(id, req.user!.userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update one post by id' })
+  @ApiOkResponse({ type: PostResponseDto })
+  updatePost(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+    @Body() dto: UpdatePostDto,
+  ) {
+    return this.postsService.updatePost(id, dto, req.user!.userId);
   }
 }

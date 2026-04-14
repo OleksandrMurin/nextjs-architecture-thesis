@@ -4,8 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Category } from 'src/categories/entities/category.entity';
 import { Repository } from 'typeorm';
 import { GetPostQueryDto } from './dto/get-query-params.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entities/post.entity';
 import { mapPostsToResponse, mapPostToResponse } from './mappers/posts.mapper';
 
@@ -14,6 +16,8 @@ export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
+    @InjectRepository(Category)
+    private readonly categoryRepo: Repository<Category>,
   ) {}
 
   async create(params: {
@@ -96,16 +100,41 @@ export class PostsService {
         likes: true,
       },
     });
-    if (!post) throw new NotFoundException('post was not found');
+    if (!post) throw new NotFoundException('Post was not found');
     return mapPostToResponse(post, userId);
   }
 
   async remove(id: number, userId: number) {
     const post = await this.postRepo.findOne({ where: { id } });
-    if (!post) throw new NotFoundException('post was not found');
+    if (!post) throw new NotFoundException('Post was not found');
     if (userId !== post.userId)
       throw new ForbiddenException('This is not your post');
     await this.postRepo.remove(post);
     return { success: true };
+  }
+
+  async updatePost(postId: number, dto: UpdatePostDto, currentUserId: number) {
+    const post = await this.postRepo.findOne({
+      where: { id: postId },
+      relations: { user: true, category: true },
+    });
+    if (!post) throw new NotFoundException('Post was not found');
+    if (post.user.id !== currentUserId)
+      throw new ForbiddenException('This is not your post');
+    if (dto.description !== undefined) post.description = dto.description;
+    if (dto.categoryId !== undefined) {
+      const category = await this.categoryRepo.findOne({
+        where: { id: dto.categoryId },
+      });
+      if (!category) throw new NotFoundException('Category was not found');
+      post.category = category;
+    }
+
+    const updatedPost = await this.postRepo.save(post);
+    const savedPost = await this.postRepo.findOne({
+      where: { id: updatedPost.id },
+      relations: { category: true, likes: true, comments: true, user: true },
+    });
+    return mapPostToResponse(savedPost!, currentUserId);
   }
 }

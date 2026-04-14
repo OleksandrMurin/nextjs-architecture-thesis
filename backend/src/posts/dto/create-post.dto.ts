@@ -4,7 +4,7 @@ import { IsOptional, IsString } from 'class-validator';
 export class CreatePostDto {
   @ApiProperty({ example: 'blah-blah-blah' })
   @IsString()
-  description: string;
+  description!: string;
 
   @ApiProperty({ example: 'sdfsdfsfdsf_image.jpg' })
   @IsOptional()
@@ -12,5 +12,5 @@ export class CreatePostDto {
   imageUrl?: string;
 
   @ApiProperty({ example: 1 })
-  categoryId: number;
+  categoryId!: number;
 }
