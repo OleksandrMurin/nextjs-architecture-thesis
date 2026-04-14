@@ -12,12 +12,14 @@ import {
 
 import { Post } from "@/types/apiTypes";
 import CardsActionSection from "./CardsActionSection";
+import EditPostButton from "./EditPostButton";
 
 type PostCardProps = {
   post: Post;
+  userId: number | null;
 } & Omit<CardProps, "children">;
 
-export function PostCard({ post, ...cardProps }: PostCardProps) {
+export function PostCard({ post, userId, ...cardProps }: PostCardProps) {
   const {
     id,
     description,
@@ -27,17 +29,22 @@ export function PostCard({ post, ...cardProps }: PostCardProps) {
     likesCount,
     likedByMe,
   } = post;
+
   const DefaultPostImage =
     "https://www.meme-arsenal.com/memes/3f8a7bfb021037f1187702e0cc9d1680.jpg";
 
   return (
     <Card {...cardProps}>
-      <CardMedia
-        component="img"
-        height="260"
-        src={DefaultPostImage}
-        alt={description}
-      />
+      <Box sx={{ position: "relative" }}>
+        {userId === post.user.id && <EditPostButton postId={id} />}
+        <CardMedia
+          component="img"
+          height="260"
+          src={DefaultPostImage}
+          alt={description}
+        />
+      </Box>
+
       <CardContent>
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
           <Typography variant="subtitle2">

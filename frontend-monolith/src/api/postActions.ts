@@ -43,3 +43,19 @@ export async function togglePostLike(
   );
   return res.data;
 }
+
+type UpdatePostPayload = {
+  description: string;
+  categoryId: string;
+};
+
+export async function updatePost(
+  postId: number,
+  payload: UpdatePostPayload,
+): Promise<Post> {
+  const res = await apiClient.patch(`posts/${postId}`, {
+    description: payload.description,
+    categoryId: Number(payload.categoryId),
+  });
+  return res.data;
+}
