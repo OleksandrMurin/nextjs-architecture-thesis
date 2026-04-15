@@ -2,7 +2,9 @@ import { getAllCategories } from "@/modules/post/api/server/categoryServerApi";
 import { getAllPosts } from "@/modules/post/api/server/postServerApi";
 import FeedControlsBar from "@/modules/post/components/FeedControlsBar";
 import { PostCard } from "@/modules/post/components/PostCard";
+import { getSSRCookie } from "@/shared/lib/cookies";
 import { Container, Stack } from "@mui/material";
+import { cookies } from "next/headers";
 
 export type GetPostsParams = {
   search?: string;
@@ -19,6 +21,8 @@ const FeedPage = async ({ searchParams }: Props) => {
   const params = await searchParams;
   const posts = await getAllPosts(params);
   const categories = await getAllCategories();
+  const cookieStore = await cookies();
+  const currentUser = await getSSRCookie("user", cookieStore);
 
   return (
     <Container
@@ -38,7 +42,9 @@ const FeedPage = async ({ searchParams }: Props) => {
           }}
         >
           {posts.map((post) => {
-            return <PostCard key={post.id} post={post} />;
+            return (
+              <PostCard key={post.id} post={post} userId={currentUser.id} />
+            );
           })}
         </Stack>
       </Stack>

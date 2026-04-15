@@ -1,3 +1,5 @@
+import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+
 export function setCookie(
   name: string,
   value: string,
@@ -32,4 +34,19 @@ export const getCSRCookie = (name: string) => {
     return parts.pop()?.split(";").shift();
   }
   return undefined;
+};
+
+export const getSSRCookie = async (
+  name: string,
+  cookieStore: ReadonlyRequestCookies,
+) => {
+  const rawEntity = cookieStore.get(name)?.value;
+  if (!rawEntity) return null;
+  try {
+    const decodedEntity = decodeURIComponent(rawEntity);
+    return JSON.parse(decodedEntity);
+  } catch (error) {
+    console.error("Failed to parse cookie:", error);
+    return null;
+  }
 };
