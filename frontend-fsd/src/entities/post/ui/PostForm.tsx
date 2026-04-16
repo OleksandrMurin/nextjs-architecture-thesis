@@ -1,6 +1,5 @@
 "use client";
 
-import { Category } from "@/entities/post";
 import {
   Alert,
   Box,
@@ -16,39 +15,54 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createPost } from "../api/create-post";
-import { getAllCategories } from "../api/get-categories";
+import { Category } from "../model/types";
 
 const MAX_IMAGE_MB = 4;
 
-export function CreatePostForm() {
+export type PostFormValues = {
+  description: string;
+  categoryId: string;
+  image?: File | null;
+};
+
+type PostFormProps = {
+  mode: "create" | "edit";
+  categories: Category[];
+  initialDescription?: string;
+  initialCategoryId?: string;
+  onSubmit: (values: PostFormValues) => Promise<void>;
+};
+
+export default function PostForm({
+  mode,
+  categories,
+  initialDescription = "",
+  initialCategoryId = "",
+  onSubmit,
+}: PostFormProps) {
   const router = useRouter();
 
   const [image, setImage] = useState<File | null>(null);
-  const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [selectValue, setSelectValue] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectValue, setSelectValue] = useState(initialCategoryId);
+  const [description, setDescription] = useState(initialDescription);
+  const title = mode === "create" ? "Create new post" : "Update your post";
+  const subtitle =
+    mode === "create"
+      ? "Upload an image, add a description and choose a category for your post"
+      : "Change image, description and category if you want so";
+  const submitLabel = mode === "create" ? "Create" : "Save";
 
   useEffect(() => {
-    async function loadCategories() {
-      try {
-        const data = await getAllCategories();
-        setCategories(data);
-        if (data.length > 0) {
-          setSelectValue(data[0].id);
-        }
-      } catch (error) {
-        console.error("Failed to load categories", error);
-        setStatus("Failed to load categories.");
-      }
-    }
-    loadCategories();
-  }, []);
+    setDescription(initialDescription);
+  }, [initialDescription]);
+
+  useEffect(() => {
+    setSelectValue(initialCategoryId);
+  }, [initialCategoryId]);
 
   useEffect(() => {
     if (!image) {
@@ -83,20 +97,37 @@ export function CreatePostForm() {
   const handleSubmit = async () => {
     setStatus(null);
 
-    if (!image) {
+    const text = description.trim();
+
+    if (!text) {
+      setStatus("Description is required.");
+      return;
+    }
+
+    if (!selectValue) {
+      setStatus("Please choose a category.");
+      return;
+    }
+
+    if (mode === "create" && !image) {
       setStatus("Please choose an image.");
       return;
     }
 
-    const text = description.trim();
-
     try {
       setLoading(true);
-      await createPost(image, text, selectValue);
-      router.push("/my-posts");
+      await onSubmit({
+        description: text,
+        categoryId: selectValue,
+        image,
+      });
     } catch (e) {
-      setStatus("Failed to create post. Try again.");
-      console.log(e);
+      console.error(e);
+      setStatus(
+        mode === "create"
+          ? "Failed to create post. Try again."
+          : "Failed to update post. Try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -109,15 +140,14 @@ export function CreatePostForm() {
           <Stack spacing={2.5}>
             <Box>
               <Typography variant="h5" fontWeight={700}>
-                Create new post
+                {title}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Upload an image and add a description.
+                {subtitle}
               </Typography>
             </Box>
 
             {status ? <Alert severity="error">{status}</Alert> : null}
-
             <Stack spacing={1.5}>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -186,23 +216,23 @@ export function CreatePostForm() {
                   </Typography>
                 </Box>
               )}
-              <FormControl>
-                <InputLabel>Select category</InputLabel>
-                <Select
-                  label="Select category"
-                  value={selectValue}
-                  onChange={(e) => {
-                    setSelectValue(e.target.value);
-                  }}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             </Stack>
+
+            <FormControl>
+              <InputLabel>Select category</InputLabel>
+              <Select
+                label="Select category"
+                value={selectValue}
+                onChange={(e) => setSelectValue(String(e.target.value))}
+                disabled={loading}
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={String(category.id)}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <Stack spacing={1}>
               <Typography variant="subtitle2">Description</Typography>
@@ -229,9 +259,9 @@ export function CreatePostForm() {
               <Button
                 variant="contained"
                 onClick={handleSubmit}
-                disabled={loading || !image}
+                disabled={loading}
               >
-                Create
+                {submitLabel}
               </Button>
             </Stack>
           </Stack>

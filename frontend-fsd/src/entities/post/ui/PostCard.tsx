@@ -15,22 +15,31 @@ import { Post } from "../model/types";
 
 type PostCardProps = {
   post: Post;
+  imageOverlay?: ReactNode;
   children?: ReactNode;
 } & CardProps;
 
-export function PostCard({ post, children, ...cardProps }: PostCardProps) {
+export function PostCard({
+  post,
+  imageOverlay,
+  children,
+  ...cardProps
+}: PostCardProps) {
   const { description, user, createdAt } = post;
   const DefaultPostImage =
     "https://www.meme-arsenal.com/memes/3f8a7bfb021037f1187702e0cc9d1680.jpg";
 
   return (
     <Card {...cardProps}>
-      <CardMedia
-        component="img"
-        height="260"
-        src={DefaultPostImage}
-        alt={description}
-      />
+      <Box sx={{ position: "relative" }}>
+        <CardMedia
+          component="img"
+          height="260"
+          src={DefaultPostImage}
+          alt={description}
+        />
+        {imageOverlay}
+      </Box>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
           <Typography variant="subtitle2">
