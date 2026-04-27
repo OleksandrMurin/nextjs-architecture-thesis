@@ -8,6 +8,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { NavigationNodeCost } from "../lib/computeNavigationScore";
 import { layoutTree } from "../lib/tree/layoutTree";
 import { treeToFlow } from "../lib/tree/treeToFlow";
 import { TreeNode } from "../types/tree";
@@ -25,6 +26,8 @@ type TreeGraphProps = {
   accessPaths: Set<string>;
   visiblePaths: Set<string>;
   direction?: LayoutDirection;
+  costByPath: Map<string, NavigationNodeCost>;
+  showNavigationCost: boolean;
 };
 
 export default function TreeGraph({
@@ -33,12 +36,16 @@ export default function TreeGraph({
   accessPaths,
   visiblePaths,
   direction = "TB",
+  costByPath,
+  showNavigationCost,
 }: TreeGraphProps) {
   const flowData = treeToFlow({
     tree,
     requiredPaths,
     accessPaths,
     visiblePaths,
+    costByPath,
+    showNavigationCost,
   });
 
   const { nodes, edges } = layoutTree(

@@ -1,4 +1,5 @@
 import { Icon } from "@iconify/react";
+import Chip from "@mui/material/Chip";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 
 export type TreeGraphNodeData = {
@@ -8,6 +9,12 @@ export type TreeGraphNodeData = {
   isRequired: boolean;
   isAccess: boolean;
   isVisible: boolean;
+  navigationCost: {
+    baseCost: number;
+    extraCost: number;
+    totalCost: number;
+  };
+  showNavigationCost: boolean;
 };
 
 export type TreeGraphFlowNode = Node<TreeGraphNodeData, "treeNode">;
@@ -66,17 +73,18 @@ export default function TreeGraphNode({ data }: NodeProps<TreeGraphFlowNode>) {
 
   return (
     <div
+      title={data.path}
       style={{
         width: 260,
-        minHeight: 110,
+        minHeight: 100,
         padding: "14px 14px 12px",
         borderRadius: 16,
         border: `2px solid ${borderColor}`,
         background: backgroundColor,
         boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-        fontSize: 12,
         display: "flex",
         flexDirection: "column",
+        justifyContent: "space-between",
         gap: 10,
       }}
     >
@@ -87,6 +95,7 @@ export default function TreeGraphNode({ data }: NodeProps<TreeGraphFlowNode>) {
           display: "flex",
           alignItems: "center",
           gap: 10,
+          minHeight: 48,
         }}
       >
         <Icon icon={icon} width={32} height={32} />
@@ -94,33 +103,54 @@ export default function TreeGraphNode({ data }: NodeProps<TreeGraphFlowNode>) {
           style={{
             fontWeight: 700,
             fontSize: 18,
-            lineHeight: 1.15,
+            lineHeight: 1.2,
             wordBreak: "break-word",
             flex: 1,
-            display: "flex",
-            alignItems: "center",
-            minHeight: 32,
           }}
         >
           {data.label}
         </div>
       </div>
 
-      <div
-        style={{
-          fontSize: 11,
-          opacity: 0.72,
-          lineHeight: 1.35,
-          overflow: "hidden",
-          display: "-webkit-box",
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: "vertical",
-          wordBreak: "break-all",
-        }}
-        title={data.path}
-      >
-        {data.path}
-      </div>
+      {data.showNavigationCost && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            {data.navigationCost.baseCost > 0 && (
+              <Chip
+                label={`base: ${data.navigationCost.baseCost.toFixed(1)}`}
+                size="small"
+                sx={{
+                  backgroundColor: "#ffffff",
+                  fontWeight: 600,
+                  height: 24,
+                }}
+              />
+            )}
+          </div>
+
+          <div>
+            {data.navigationCost.extraCost > 0 && (
+              <Chip
+                label={`+ ${data.navigationCost.extraCost.toFixed(1)}`}
+                size="small"
+                sx={{
+                  backgroundColor: "#fed7aa",
+                  fontWeight: 600,
+                  height: 24,
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       <Handle type="source" position={Position.Bottom} />
     </div>

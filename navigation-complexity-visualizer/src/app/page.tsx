@@ -8,6 +8,7 @@ import TreeGraph from "../components/TreeGraph";
 import { projectTrees } from "../data/projectTrees";
 import { ArchitectureKey, FeatureKey, scenarios } from "../data/scenarios";
 import { computeLevelStats } from "../lib/computeLevelStats";
+import { computeNavigationScore } from "../lib/computeNavigationScore";
 import { computeScenarioMetrics } from "../lib/computeScenarioMetrics";
 import { buildTreeIndex } from "../lib/tree/buildTreeIndex";
 import { computeAccessPaths } from "../lib/tree/computeAccessPaths";
@@ -21,6 +22,7 @@ export default function Home() {
   const [feature, setFeature] = useState<FeatureKey>("create-post");
   const [direction, setDirection] = useState<"TB" | "LR">("TB");
   const [visibilityMode, setVisibilityMode] = useState<VisibilityMode>("full");
+  const [showNavigationCost, setShowNavigationCost] = useState<boolean>(true);
 
   const currentTree = useMemo(() => projectTrees[architecture], [architecture]);
 
@@ -47,6 +49,17 @@ export default function Home() {
       visiblePaths,
     });
   }, [currentTree, accessPaths, visiblePaths]);
+
+  const navigationScore = useMemo(() => {
+    return computeNavigationScore({
+      tree: currentTree,
+      requiredPaths,
+      visiblePaths,
+      directoryWeight: 0.5,
+      fileWeight: 1,
+      repeatFactor: 0.5,
+    });
+  }, [currentTree, requiredPaths, visiblePaths]);
 
   const scenarioMetrics = useMemo(() => {
     return computeScenarioMetrics({
@@ -91,12 +104,14 @@ export default function Home() {
         feature={feature}
         direction={direction}
         visibilityMode={visibilityMode}
+        showNavigationCost={showNavigationCost}
         onArchitectureChange={(value) =>
           setArchitecture(value as ArchitectureKey)
         }
         onFeatureChange={(value) => setFeature(value as FeatureKey)}
         onDirectionChange={setDirection}
         onVisibilityModeChange={setVisibilityMode}
+        onShowNavigationCostChange={setShowNavigationCost}
       />
 
       <div style={{ position: "relative" }}>
@@ -108,6 +123,8 @@ export default function Home() {
           accessPaths={accessPaths}
           visiblePaths={visiblePaths}
           direction={direction}
+          costByPath={navigationScore.costByPath}
+          showNavigationCost={showNavigationCost}
         />
         <LevelStatsPanel stats={levelStats} />
         <div
@@ -137,6 +154,10 @@ export default function Home() {
               Precision:{" "}
               <strong>{(scenarioMetrics.precision * 100).toFixed(1)}%</strong> (
               {scenarioMetrics.access}/{scenarioMetrics.reviewed})
+            </div>
+            <div>
+              Navigation score:{" "}
+              <strong>{navigationScore.totalScore.toFixed(2)}</strong>
             </div>
           </div>
         </div>

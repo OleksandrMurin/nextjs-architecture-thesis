@@ -5,12 +5,14 @@ type ControlPanelProps = {
   feature: string;
   direction: "TB" | "LR";
   visibilityMode: "full" | "active-only" | "access-only";
+  showNavigationCost: boolean;
   onArchitectureChange?: (value: string) => void;
   onFeatureChange?: (value: string) => void;
   onDirectionChange?: (value: "TB" | "LR") => void;
   onVisibilityModeChange?: (
     value: "full" | "active-only" | "access-only",
   ) => void;
+  onShowNavigationCostChange?: (value: boolean) => void;
 };
 
 export default function ControlPanel({
@@ -18,10 +20,12 @@ export default function ControlPanel({
   feature,
   direction,
   visibilityMode,
+  showNavigationCost,
   onArchitectureChange,
   onFeatureChange,
   onDirectionChange,
   onVisibilityModeChange,
+  onShowNavigationCostChange,
 }: ControlPanelProps) {
   return (
     <div
@@ -137,6 +141,30 @@ export default function ControlPanel({
             <option value="active-only">Active only</option>
             <option value="access-only">Access path only</option>
           </select>
+        </label>
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showNavigationCost}
+            onChange={(e) => onShowNavigationCostChange?.(e.target.checked)}
+          />
+          Show navigation cost on nodes
         </label>
       </div>
     </div>

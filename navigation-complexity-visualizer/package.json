@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@iconify/react": "^6.0.2",
+    "@mui/material": "^9.0.0",
     "@xyflow/react": "^12.10.2",
     "dagre": "^0.8.5",
     "next": "16.2.4",

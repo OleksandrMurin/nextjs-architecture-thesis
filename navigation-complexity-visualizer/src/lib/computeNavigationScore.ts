@@ -1,13 +1,19 @@
 import { TreeNode } from "../types/tree";
 
+export type NavigationNodeCost = {
+  baseCost: number;
+  extraCost: number;
+  totalCost: number;
+};
+
 export type NavigationScoreResult = {
   totalScore: number;
-  costByPath: Map<string, number>;
+  costByPath: Map<string, NavigationNodeCost>;
 };
 
 type ComputeNavigationScoreParams = {
   tree: TreeNode;
-  accessPaths: Set<string>;
+  requiredPaths: Set<string>;
   visiblePaths: Set<string>;
   directoryWeight?: number;
   fileWeight?: number;
@@ -24,67 +30,79 @@ function getNodeWeight(
 
 export function computeNavigationScore({
   tree,
-  accessPaths,
+  requiredPaths,
   visiblePaths,
   directoryWeight = 0.5,
   fileWeight = 1,
   repeatFactor = 0.5,
 }: ComputeNavigationScoreParams): NavigationScoreResult {
-  const costByPath = new Map<string, number>();
-  let totalScore = 0;
+  const costByPath = new Map<string, NavigationNodeCost>();
 
-  function addCost(path: string, value: number) {
-    const prev = costByPath.get(path) ?? 0;
-    costByPath.set(path, prev + value);
+  function ensureCost(path: string): NavigationNodeCost {
+    const existing = costByPath.get(path);
+    if (existing) return existing;
+
+    const created: NavigationNodeCost = {
+      baseCost: 0,
+      extraCost: 0,
+      totalCost: 0,
+    };
+
+    costByPath.set(path, created);
+    return created;
+  }
+
+  function addBaseCost(path: string, value: number) {
+    const item = ensureCost(path);
+    item.baseCost += value;
+    item.totalCost += value;
+  }
+
+  function addExtraCost(path: string, value: number) {
+    const item = ensureCost(path);
+    item.extraCost += value;
+    item.totalCost += value;
   }
 
   function walk(node: TreeNode): void {
-    if (node.type !== "directory" || !node.children?.length) {
-      return;
+    if (visiblePaths.has(node.path)) {
+      addBaseCost(node.path, getNodeWeight(node, directoryWeight, fileWeight));
     }
 
-    const reviewedChildren = node.children.filter((child) =>
-      visiblePaths.has(child.path),
-    );
+    if (node.type === "directory" && node.children?.length) {
+      const reviewedChildren = node.children.filter((child) =>
+        visiblePaths.has(child.path),
+      );
 
-    const accessChildren = node.children.filter((child) =>
-      accessPaths.has(child.path),
-    );
+      const requiredLeafChildren = node.children.filter(
+        (child) => child.type === "file" && requiredPaths.has(child.path),
+      );
 
-    const k = accessChildren.length;
+      const requiredLeafCount = requiredLeafChildren.length;
 
-    if (k > 0 && reviewedChildren.length > 0) {
-      const baseCost = reviewedChildren.reduce((sum, child) => {
-        return sum + getNodeWeight(child, directoryWeight, fileWeight);
-      }, 0);
+      if (requiredLeafCount > 1 && reviewedChildren.length > 0) {
+        const reviewCost = reviewedChildren.reduce((sum, child) => {
+          return sum + getNodeWeight(child, directoryWeight, fileWeight);
+        }, 0);
 
-      const score = baseCost * (1 + repeatFactor * (k - 1));
-      totalScore += score;
+        const repeatBonus = reviewCost * repeatFactor * (requiredLeafCount - 1);
+        const perReviewedChildBonus = repeatBonus / reviewedChildren.length;
 
-      // Самой директории записываем суммарную стоимость обзора ее содержимого
-      addCost(node.path, score);
-
-      // Базовую стоимость раскладываем по просмотренным дочерним элементам
-      reviewedChildren.forEach((child) => {
-        const childWeight = getNodeWeight(child, directoryWeight, fileWeight);
-        addCost(child.path, childWeight);
-      });
-
-      // Повторный поиск раскладываем только по полезным дочерним элементам
-      if (k > 1) {
-        const repeatCost = baseCost * repeatFactor * (k - 1);
-        const perAccessChildRepeat = repeatCost / k;
-
-        accessChildren.forEach((child) => {
-          addCost(child.path, perAccessChildRepeat);
+        reviewedChildren.forEach((child) => {
+          addExtraCost(child.path, perReviewedChildBonus);
         });
       }
-    }
 
-    node.children.forEach((child) => walk(child));
+      node.children.forEach((child) => walk(child));
+    }
   }
 
   walk(tree);
+
+  const totalScore = Array.from(costByPath.values()).reduce(
+    (sum, item) => sum + item.totalCost,
+    0,
+  );
 
   return {
     totalScore,

@@ -1,12 +1,15 @@
 import { TreeGraphFlowNode } from "@/src/components/TreeGraphNode";
 import { TreeNode } from "@/src/types/tree";
 import type { Edge } from "@xyflow/react";
+import { NavigationNodeCost } from "../computeNavigationScore";
 
 type TreeToFlowParams = {
   tree: TreeNode;
   requiredPaths: Set<string>;
   accessPaths: Set<string>;
   visiblePaths: Set<string>;
+  costByPath: Map<string, NavigationNodeCost>;
+  showNavigationCost: boolean;
 };
 
 export function treeToFlow({
@@ -14,6 +17,8 @@ export function treeToFlow({
   requiredPaths,
   accessPaths,
   visiblePaths,
+  costByPath,
+  showNavigationCost,
 }: TreeToFlowParams): {
   nodes: TreeGraphFlowNode[];
   edges: Edge[];
@@ -22,6 +27,11 @@ export function treeToFlow({
   const edges: Edge[] = [];
 
   function walk(node: TreeNode, parentPath: string | null): void {
+    const nodeCost = costByPath.get(node.path) ?? {
+      baseCost: 0,
+      extraCost: 0,
+      totalCost: 0,
+    };
     nodes.push({
       id: node.path,
       type: "treeNode",
@@ -33,6 +43,8 @@ export function treeToFlow({
         isRequired: requiredPaths.has(node.path),
         isAccess: accessPaths.has(node.path),
         isVisible: visiblePaths.has(node.path),
+        navigationCost: nodeCost,
+        showNavigationCost,
       },
     });
 
