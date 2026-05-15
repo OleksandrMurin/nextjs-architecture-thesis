@@ -18,6 +18,7 @@ type ComputeNavigationScoreParams = {
   directoryWeight?: number;
   fileWeight?: number;
   repeatFactor?: number;
+  repeatExcludedPaths?: Set<string>;
 };
 
 function getNodeWeight(
@@ -35,6 +36,7 @@ export function computeNavigationScore({
   directoryWeight = 0.5,
   fileWeight = 1,
   repeatFactor = 0.5,
+  repeatExcludedPaths = new Set(["src"]),
 }: ComputeNavigationScoreParams): NavigationScoreResult {
   const costByPath = new Map<string, NavigationNodeCost>();
 
@@ -52,49 +54,65 @@ export function computeNavigationScore({
     return created;
   }
 
-  function addBaseCost(path: string, value: number) {
+  function addBaseCost(path: string, value: number): void {
     const item = ensureCost(path);
     item.baseCost += value;
     item.totalCost += value;
   }
 
-  function addExtraCost(path: string, value: number) {
+  function addExtraCost(path: string, value: number): void {
     const item = ensureCost(path);
     item.extraCost += value;
     item.totalCost += value;
   }
 
-  function walk(node: TreeNode): void {
+  function walk(node: TreeNode): boolean {
     if (visiblePaths.has(node.path)) {
       addBaseCost(node.path, getNodeWeight(node, directoryWeight, fileWeight));
     }
 
-    if (node.type === "directory" && node.children?.length) {
-      const reviewedChildren = node.children.filter((child) =>
-        visiblePaths.has(child.path),
-      );
-
-      const requiredLeafChildren = node.children.filter(
-        (child) => child.type === "file" && requiredPaths.has(child.path),
-      );
-
-      const requiredLeafCount = requiredLeafChildren.length;
-
-      if (requiredLeafCount > 1 && reviewedChildren.length > 0) {
-        const reviewCost = reviewedChildren.reduce((sum, child) => {
-          return sum + getNodeWeight(child, directoryWeight, fileWeight);
-        }, 0);
-
-        const repeatBonus = reviewCost * repeatFactor * (requiredLeafCount - 1);
-        const perReviewedChildBonus = repeatBonus / reviewedChildren.length;
-
-        reviewedChildren.forEach((child) => {
-          addExtraCost(child.path, perReviewedChildBonus);
-        });
-      }
-
-      node.children.forEach((child) => walk(child));
+    if (node.type === "file") {
+      return requiredPaths.has(node.path);
     }
+
+    const children = node.children ?? [];
+
+    const relevantChildren: TreeNode[] = [];
+
+    children.forEach((child) => {
+      const childContainsRequiredFile = walk(child);
+
+      if (childContainsRequiredFile) {
+        relevantChildren.push(child);
+      }
+    });
+
+    const reviewedChildren = children.filter((child) =>
+      visiblePaths.has(child.path),
+    );
+
+    const hasMultipleRelevantBranches = relevantChildren.length > 1;
+    const canApplyRepeatCost = !repeatExcludedPaths.has(node.path);
+
+    if (
+      hasMultipleRelevantBranches &&
+      canApplyRepeatCost &&
+      reviewedChildren.length > 0
+    ) {
+      const reviewCost = reviewedChildren.reduce((sum, child) => {
+        return sum + getNodeWeight(child, directoryWeight, fileWeight);
+      }, 0);
+
+      const repeatCount = relevantChildren.length - 1;
+      const repeatBonus = reviewCost * repeatFactor * repeatCount;
+      const perReviewedChildBonus = repeatBonus / reviewedChildren.length;
+
+      reviewedChildren.forEach((child) => {
+        addExtraCost(child.path, perReviewedChildBonus);
+      });
+    }
+
+    return relevantChildren.length > 0;
   }
 
   walk(tree);

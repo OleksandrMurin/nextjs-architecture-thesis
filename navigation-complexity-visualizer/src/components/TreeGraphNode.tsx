@@ -139,7 +139,7 @@ export default function TreeGraphNode({ data }: NodeProps<TreeGraphFlowNode>) {
           <div>
             {data.navigationCost.extraCost > 0 && (
               <Chip
-                label={`+ ${data.navigationCost.extraCost.toFixed(1)}`}
+                label={`+ ${data.navigationCost.extraCost.toFixed(2)}`}
                 size="small"
                 sx={{
                   backgroundColor: "#fed7aa",

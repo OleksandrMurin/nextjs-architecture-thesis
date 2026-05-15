@@ -7,9 +7,17 @@ import LevelStatsPanel from "../components/LevelStatsPanel";
 import TreeGraph from "../components/TreeGraph";
 import { projectTrees } from "../data/projectTrees";
 import { ArchitectureKey, FeatureKey, scenarios } from "../data/scenarios";
+import {
+  computeAllScenarioMetrics,
+  computeAverageMetrics,
+} from "../lib/computeAllMetrics";
 import { computeLevelStats } from "../lib/computeLevelStats";
 import { computeNavigationScore } from "../lib/computeNavigationScore";
 import { computeScenarioMetrics } from "../lib/computeScenarioMetrics";
+import {
+  exportAverageMetricsToCsv,
+  exportScenarioMetricsToCsv,
+} from "../lib/exportMetricsToCsv";
 import { buildTreeIndex } from "../lib/tree/buildTreeIndex";
 import { computeAccessPaths } from "../lib/tree/computeAccessPaths";
 import { computeVisibleNodes } from "../lib/tree/computeVisibleNodes";
@@ -81,6 +89,14 @@ export default function Home() {
     return pruned ?? currentTree;
   }, [currentTree, allowedPaths]);
 
+  const allScenarioMetrics = useMemo(() => {
+    return computeAllScenarioMetrics();
+  }, []);
+
+  const averageMetrics = useMemo(() => {
+    return computeAverageMetrics(allScenarioMetrics);
+  }, [allScenarioMetrics]);
+
   return (
     <main
       style={{
@@ -113,6 +129,44 @@ export default function Home() {
         onVisibilityModeChange={setVisibilityMode}
         onShowNavigationCostChange={setShowNavigationCost}
       />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 12,
+          marginBottom: 20,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => exportScenarioMetricsToCsv(allScenarioMetrics)}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid #cbd5e1",
+            background: "#ffffff",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          Export scenario metrics CSV
+        </button>
+
+        <button
+          type="button"
+          onClick={() => exportAverageMetricsToCsv(averageMetrics)}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid #cbd5e1",
+            background: "#ffffff",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          Export average metrics CSV
+        </button>
+      </div>
 
       <div style={{ position: "relative" }}>
         <Legend />
