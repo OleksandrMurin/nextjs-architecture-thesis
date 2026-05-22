@@ -19,7 +19,7 @@ export default function LevelStatsPanel({ stats }: LevelStatsPanelProps) {
         marginTop: 20,
         padding: 18,
         borderRadius: 18,
-        background: "#f8fafc",
+        background: "#eef2ff",
         border: "1px solid #e2e8f0",
         boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
       }}

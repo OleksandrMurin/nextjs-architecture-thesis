@@ -101,20 +101,10 @@ export default function Home() {
     <main
       style={{
         padding: 24,
-        background: "#ffffff",
+        background: "#f3f6fb",
         minHeight: "100vh",
       }}
     >
-      <h1
-        style={{
-          marginBottom: 16,
-          textAlign: "center",
-          fontSize: 28,
-        }}
-      >
-        Navigation Complexity Visualizer
-      </h1>
-
       <ControlPanel
         architecture={architecture}
         feature={feature}
@@ -168,53 +158,91 @@ export default function Home() {
         </button>
       </div>
 
-      <div style={{ position: "relative" }}>
-        <Legend />
-
-        <TreeGraph
-          tree={displayedTree}
-          requiredPaths={requiredPaths}
-          accessPaths={accessPaths}
-          visiblePaths={visiblePaths}
-          direction={direction}
-          costByPath={navigationScore.costByPath}
-          showNavigationCost={showNavigationCost}
-        />
-        <LevelStatsPanel stats={levelStats} />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 380px",
+          gap: 20,
+          alignItems: "start",
+        }}
+      >
         <div
           style={{
-            marginTop: 20,
-            padding: 18,
-            borderRadius: 18,
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            position: "relative",
+            minWidth: 0,
           }}
         >
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
-            Scenario metrics
+          <div
+            style={{
+              position: "absolute",
+              top: 18,
+              left: 18,
+              zIndex: 10,
+            }}
+          >
+            <Legend />
           </div>
 
-          <div style={{ fontSize: 14, lineHeight: 1.7 }}>
-            <div>
-              Depth: <strong>{scenarioMetrics.depth}</strong>
+          <TreeGraph
+            tree={displayedTree}
+            requiredPaths={requiredPaths}
+            accessPaths={accessPaths}
+            visiblePaths={visiblePaths}
+            direction={direction}
+            costByPath={navigationScore.costByPath}
+            showNavigationCost={showNavigationCost}
+          />
+        </div>
+
+        <aside
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <LevelStatsPanel stats={levelStats} />
+
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 18,
+              background: "##eef2ff",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+              Scenario metrics
             </div>
-            <div>
-              Coverage:{" "}
-              <strong>{(scenarioMetrics.coverage * 100).toFixed(1)}%</strong> (
-              {scenarioMetrics.reviewed}/{scenarioMetrics.total})
-            </div>
-            <div>
-              Precision:{" "}
-              <strong>{(scenarioMetrics.precision * 100).toFixed(1)}%</strong> (
-              {scenarioMetrics.access}/{scenarioMetrics.reviewed})
-            </div>
-            <div>
-              Navigation score:{" "}
-              <strong>{navigationScore.totalScore.toFixed(2)}</strong>
+
+            <div style={{ fontSize: 14, lineHeight: 1.8 }}>
+              <div>
+                FTUF: <strong>{requiredPaths.size}</strong>
+              </div>
+              <div>
+                Visited nodes: <strong>{scenarioMetrics.reviewed}</strong>
+              </div>
+              <div>
+                Depth: <strong>{scenarioMetrics.depth}</strong>
+              </div>
+              <div>
+                Coverage:{" "}
+                <strong>{(scenarioMetrics.coverage * 100).toFixed(1)}%</strong>{" "}
+                ({scenarioMetrics.reviewed}/{scenarioMetrics.total})
+              </div>
+              <div>
+                Precision:{" "}
+                <strong>{(scenarioMetrics.precision * 100).toFixed(1)}%</strong>{" "}
+                ({scenarioMetrics.access}/{scenarioMetrics.reviewed})
+              </div>
+              <div>
+                Navigation score:{" "}
+                <strong>{navigationScore.totalScore.toFixed(2)}</strong>
+              </div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </main>
   );
