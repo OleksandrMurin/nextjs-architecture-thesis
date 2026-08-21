@@ -14,10 +14,7 @@ import {
 import { computeLevelStats } from "../lib/computeLevelStats";
 import { computeNavigationScore } from "../lib/computeNavigationScore";
 import { computeScenarioMetrics } from "../lib/computeScenarioMetrics";
-import {
-  exportAverageMetricsToCsv,
-  exportScenarioMetricsToCsv,
-} from "../lib/exportMetricsToCsv";
+import { exportScenarioMetricsToCsv } from "../lib/exportMetricsToCsv";
 import { buildTreeIndex } from "../lib/tree/buildTreeIndex";
 import { computeAccessPaths } from "../lib/tree/computeAccessPaths";
 import { computeVisibleNodes } from "../lib/tree/computeVisibleNodes";
@@ -142,7 +139,7 @@ export default function Home() {
           Export scenario metrics CSV
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => exportAverageMetricsToCsv(averageMetrics)}
           style={{
@@ -155,7 +152,7 @@ export default function Home() {
           }}
         >
           Export average metrics CSV
-        </button>
+        </button> */}
       </div>
 
       <div
@@ -175,8 +172,8 @@ export default function Home() {
           <div
             style={{
               position: "absolute",
-              top: 18,
-              left: 18,
+              top: 0,
+              left: 250,
               zIndex: 10,
             }}
           >

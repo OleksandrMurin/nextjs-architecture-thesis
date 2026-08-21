@@ -27,7 +27,7 @@ export function PostCard({
 }: PostCardProps) {
   const { description, user, createdAt } = post;
   const DefaultPostImage =
-    "https://www.meme-arsenal.com/memes/3f8a7bfb021037f1187702e0cc9d1680.jpg";
+    "https://thebrainchamber.com/wp-content/uploads/2024/10/Moai-Statues-of-Easter-Island.webp";
 
   return (
     <Card {...cardProps}>
